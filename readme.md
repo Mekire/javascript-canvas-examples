@@ -8,6 +8,7 @@ Due to my inexperience with the language, some of the approaches I take may be s
 
 ### JS fiddle links for specific examples:
 [Canvas Color Change](http://jsfiddle.net/Mekire/ms6mhhLn/embedded/result/)  
+[Draggable Square](http://jsfiddle.net/Mekire/56youx6p/embedded/result/)  
 [8-Direction Movement](http://jsfiddle.net/Mekire/hhv4fuja/embedded/result/)
 
 
