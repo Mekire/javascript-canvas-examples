@@ -80,12 +80,12 @@ Player.prototype.draw = function(context){
 };
 
 
-function Mouse(boundingRect) {
+function Mouse(canvas) {
     /*
      * A class to keep track of mouse state.
      * Pass the bounding rect of relevant canvas on construction.
      */
-    this.boundingRect = boundingRect;
+    this.canvas = canvas;
     this.x = null; 
     this.y = null; 
     this.oldX = null;
@@ -114,8 +114,9 @@ Mouse.prototype.onMove = function(event){
     /*
      * Set the mouse position relative to the canvas.
      */
-    this.x = event.clientX-this.boundingRect.left;
-    this.y = event.clientY-this.boundingRect.top;
+    var boundingRect = this.canvas.getBoundingClientRect();
+    this.x = event.clientX-boundingRect.left;
+    this.y = event.clientY-boundingRect.top;
 };
       
       
@@ -126,7 +127,7 @@ function GameLoop(){
     this.canvas = document.getElementById("topCanvas");
     this.context = this.canvas.getContext('2d');
     this.fps = 60;
-    this.mouse = new Mouse(this.canvas.getBoundingClientRect());
+    this.mouse = new Mouse(this.canvas);
     this.player = new Player([200,100], "red");
     this.mainLoop = this.mainLoop.bind(this);
 }
