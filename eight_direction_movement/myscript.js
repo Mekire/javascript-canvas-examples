@@ -19,7 +19,7 @@ function Player(pos, color, speed){
      * Our basic player object. Arguments are a two element array for position
      * (eg [0, 50]), a color string, and the speed per frame (an integer).
      */
-    this.rect = new Rect(pos[0], pos[1], 50, 50);
+    this.rect = new Rect(pos[0], pos[1], 30, 30);
     this.color = color;
     this.speed = speed;
 }

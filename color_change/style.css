@@ -1,9 +1,9 @@
 
 body {
     margin : 20px;
+    background-color: slategrey;
     font-family: 'Helvetica';
     color: lightgray;
-    background-color: slategrey;
     text-align : center;
 }
 
