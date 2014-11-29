@@ -1,6 +1,6 @@
 /*
  * This program demonstrates clicking and dragging a rectangle.
- * Rather than dragging by a specified handle, the obejct is moved
+ * Rather than dragging by a specified handle, the object is moved
  * according to the mouse's relative movement between frames.
  */
 
