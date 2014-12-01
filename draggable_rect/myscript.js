@@ -35,6 +35,7 @@ function Player(pos, color){
     this.color = color;
     this.hover = false;
     this.click = false;
+    this.text_center = {x: null, y: null};
     document.addEventListener('mousedown',this.onClick.bind(this,true), false);
     document.addEventListener('mouseup', this.onClick.bind(this,false), false);
 }
@@ -52,7 +53,7 @@ Player.prototype.onClick = function(val, event){
     }
 };
 
-Player.prototype.update = function(mouse, context){
+Player.prototype.update = function(mouse){
     /*
      * Set hover based on collision with the mouse position.
      * If the player is currently clicked, update position based on the
@@ -63,6 +64,18 @@ Player.prototype.update = function(mouse, context){
         this.rect.x += mouse.rel.x;
         this.rect.y += mouse.rel.y;
     }
+    this.text_center.x = this.rect.x+Math.floor(this.rect.w/2);
+    this.text_center.y = this.rect.y+this.rect.h+30;
+};
+
+Player.prototype.renderText = function(message, context){
+    /*
+     * Render a simple message beneath the square.
+     */
+    context.font = '25pt Helvetica';
+    context.textAlign = 'center';
+    context.fillStyle = 'black';
+    context.fillText(message, this.text_center.x, this.text_center.y);
 };
 
 Player.prototype.draw = function(context){
@@ -77,6 +90,7 @@ Player.prototype.draw = function(context){
     context.lineWidth = 5;
     context.strokeStyle = 'black';
     context.stroke();
+    this.renderText("I'm a red square.", context);
 };
 
 
