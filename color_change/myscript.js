@@ -1,3 +1,9 @@
+/*
+ * A simple program that fills the canvas with a random color on 
+ * left mouse click.
+ */
+
+
 function App(){
     /*
      * Create our canvas and context and add an event listener.  

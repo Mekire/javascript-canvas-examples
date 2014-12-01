@@ -1,3 +1,8 @@
+/*
+ * A simple sprite that can be moved in all eight directions.
+ */
+
+
 var DIRECT_DICT = {left: {x: -1, y: 0}, right: {x: 1, y: 0},
                    up: {x: 0, y: -1}, down: {x:0, y: 1}};
 
