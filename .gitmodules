@@ -1,0 +1,3 @@
+[submodule "rect.js"]
+	path = rect.js
+	url = https://github.com/Mekire/rect.js
