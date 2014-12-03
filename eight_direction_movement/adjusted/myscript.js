@@ -25,7 +25,7 @@ function Player(pos, color, speed){
     this.speed = speed;
 }
 
-Player.prototype.update = function(key_states, context){
+Player.prototype.update = function(key_states, contextRect){
     /*
      * The players update function to be run every frame.
      * Should be passed a Controls.state object and the valid context.
@@ -42,6 +42,7 @@ Player.prototype.update = function(key_states, context){
     var unit_speed = (vector.x && vector.y) ? ANGLE_UNIT_SPEED : 1;
     this.rect.x += unit_speed*this.speed*vector.x;
     this.rect.y += unit_speed*this.speed*vector.y;
+    this.rect.clampIP(contextRect);
 };
 
 Player.prototype.draw = function(context){
@@ -89,6 +90,8 @@ function GameLoop(context){
      * The primary control flow for our program is managed by this object.
      */
     this.context = context;
+    var size = [this.context.canvas.width, this.context.canvas.height];
+    this.contextRect = new RECT.Rect(0, 0, size[0], size[1]);
     this.fps = 60;
     this.interval = 1000/this.fps;
     this.controls = new Controls();
@@ -100,7 +103,7 @@ GameLoop.prototype.update = function(){
     /*
      * Update all actors, called every frame.
      */
-    this.player.update(this.controls.states, this.context);
+    this.player.update(this.controls.states, this.contextRect);
 };
 
 GameLoop.prototype.render = function(){
