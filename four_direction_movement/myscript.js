@@ -27,18 +27,6 @@ FOUR.removeItem = function(array, value){
 };
 
 
-FOUR.inArray = function(array, value){
-    /*
-     * Check if value is in the array.
-     */
-    for(var i=0; i<array.length; i++){
-        if(array[i] === value)
-            return true;
-    }
-    return false;
-};
-
-
 FOUR.Player = function(pos, color, speed, direction){
     /**
      * Our basic player object. Arguments are a two element array for position
@@ -59,7 +47,6 @@ FOUR.Player.prototype.onKey = function(val, event){
      * If the keyCode is found in FOUR.KEY_CODES then
      * the direction is passed to addDirection or popDirection.
      */
-    console.log(event);
     var direction = FOUR.KEY_CODES[event.keyCode];
     if (typeof direction === 'undefined')
         return;
@@ -72,29 +59,33 @@ FOUR.Player.prototype.onKey = function(val, event){
 };
 
 FOUR.Player.prototype.addDirection = function(key){
-    if(key in FOUR.DIRECT_DICT){
-        if(FOUR.inArray(this.directionStack,key))
-            FOUR.removeItem(this.directionStack, key);
-        this.directionStack.push(key);
-        this.direction = this.directionStack[this.directionStack.length-1];
-    }
+    /*
+     * Add a direction to the top of the directionStack.
+     * If the direction is already at the top, immediately return;
+     * else, remove the key from the stack if present and add it to the top.
+     */
+    if(this.directionStack[this.directionStack.length-1] === key)
+        return;
+    FOUR.removeItem(this.directionStack, key);
+    this.directionStack.push(key);
+    this.direction = this.directionStack[this.directionStack.length-1];
 };
 
 FOUR.Player.prototype.popDirection = function(key){
-    if(key in FOUR.DIRECT_DICT){
-        if(FOUR.inArray(this.directionStack,key))
-            FOUR.removeItem(this.directionStack, key);
-        if(this.directionStack.length)
-            this.direction = this.directionStack[this.directionStack.length-1];
-    }
+    /*
+     * Remove a direction from the stack.
+     * If the stack is non-empty; set the player's direction to the top.
+     */
+    FOUR.removeItem(this.directionStack, key);
+    if(this.directionStack.length)
+        this.direction = this.directionStack[this.directionStack.length-1];
 };
 
 FOUR.Player.prototype.update = function(contextRect){
     /**
-     * The players update function to be run every frame.
-     * Should be passed a Controls.state object and the valid context.
-     * The key states will be looped through and the pertinent position
-     * of the players rect will be adjusted.
+     * The player's update function to be run every frame.
+     * If there is a direction on the directionStack, update the player's
+     * rect accordingly. The player position is clamped inside the contextRect.
      */
     if(this.directionStack.length){
         var vector = FOUR.DIRECT_DICT[this.direction];
