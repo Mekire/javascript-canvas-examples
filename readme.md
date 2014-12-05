@@ -10,7 +10,8 @@ Due to my inexperience with the language, some of the approaches I take may be s
 [Canvas Color Change](http://jsfiddle.net/Mekire/ms6mhhLn/embedded/result/)  
 [Draggable Square](http://jsfiddle.net/Mekire/56youx6p/embedded/result/)  
 [8-Direction Movement](http://jsfiddle.net/Mekire/hhv4fuja/embedded/result/)  
-[8-Dir Movement: Adjusted](http://jsfiddle.net/Mekire/fq51r7ax/embedded/result/)
+[8-Dir Movement: Adjusted](http://jsfiddle.net/Mekire/fq51r7ax/embedded/result/)  
+[4-Direction Movement (WIP)](http://jsfiddle.net/Mekire/4kg90jbo/embedded/result/)
 
 ### Note on cloning:  
 This repo has submodule dependencies.  
