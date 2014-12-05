@@ -1,5 +1,6 @@
 /*
  * A simple sprite that can be moved in the four orthogonal directions.
+ * Instead of a simple rectangle, our player is now an animated sprite.
  */
 
 
@@ -27,18 +28,46 @@ FOUR.removeItem = function(array, value){
 };
 
 
-FOUR.Player = function(pos, color, speed, direction){
+FOUR.Player = function(pos, speed, direction){
     /**
      * Our basic player object. Arguments are a two element array for position
-     * (eg [0, 50]), a color string, and the speed per frame (an integer).
+     * (eg [0, 50]), speed (per second), and a starting direction.
+     * If a direction is not passed it will default to 'right'.
      */
-    this.rect = new RECT.Rect(pos[0], pos[1], 30, 30);
-    this.color = color;
+    this.rect = new RECT.Rect(pos[0], pos[1], 50, 50);
     this.speed = speed;
+    this.sheet = new Image();
+    this.sheet.src = "skelly.png";
     this.directionStack = [];
     this.direction = direction || 'right';
+    this.prepareFrames();
     document.addEventListener('keydown', this.onKey.bind(this, true), false);
     document.addEventListener('keyup', this.onKey.bind(this, false), false);
+};
+
+FOUR.Player.prototype.prepareFrames = function(){
+    /*
+     * Creates the necessary attributes for animating our sprite.
+     */
+    this.frameFPS = 7;
+    this.lastFrameTime = 0;
+    this.frame = 0;
+    this.frames = {left: [[0,false], [50,false]], 
+                   right: [[0,true], [50,true]],
+                   up: [[100,false], [100,true]],
+                   down: [[150,false], [150,true]]};
+};
+
+FOUR.Player.prototype.updateFrame = function(time){
+    /*
+     * Changes the animation frame when enough time has elapsed.
+     */
+    if(!this.lastFrameTime)
+        this.lastFrameTime = time;
+    if(time-this.lastFrameTime > 1000/this.frameFPS){
+        this.frame = (this.frame+1)%2;
+        this.lastFrameTime = time;
+    }
 };
 
 FOUR.Player.prototype.onKey = function(val, event){
@@ -68,7 +97,7 @@ FOUR.Player.prototype.addDirection = function(key){
         return;
     FOUR.removeItem(this.directionStack, key);
     this.directionStack.push(key);
-    this.direction = this.directionStack[this.directionStack.length-1];
+    this.direction = key;
 };
 
 FOUR.Player.prototype.popDirection = function(key){
@@ -81,32 +110,45 @@ FOUR.Player.prototype.popDirection = function(key){
         this.direction = this.directionStack[this.directionStack.length-1];
 };
 
-FOUR.Player.prototype.update = function(contextRect){
+FOUR.Player.prototype.update = function(time, delta, contextRect){
     /**
      * The player's update function to be run every frame.
      * If there is a direction on the directionStack, update the player's
      * rect accordingly. The player position is clamped inside the contextRect.
      */
     if(this.directionStack.length){
+        this.updateFrame(time);
         var vector = FOUR.DIRECT_DICT[this.direction];
-        this.rect.x += this.speed*vector.x;
-        this.rect.y += this.speed*vector.y;
+        this.rect.x += delta*this.speed*vector.x;
+        this.rect.y += delta*this.speed*vector.y;
         this.rect.clampIP(contextRect);
     }
 };
 
 FOUR.Player.prototype.draw = function(context){
     /*
-     * Draws our player to the screen (a lovable rectangle).
+     * Draws our player to the screen.
      * Pass the desired context.
+     * The context must be flipped to draw the sprites mirrored frames.
+     * This may be too slow in more complex programs.
      */
-    context.beginPath();
-    context.rect(this.rect.x, this.rect.y, this.rect.w, this.rect.h);
-    context.fillStyle = this.color;
-    context.fill();
-    context.lineWidth = 5;
-    context.strokeStyle = 'black';
-    context.stroke();
+    var frame_data = this.frames[this.direction][this.frame];
+    var x = frame_data[0];
+    var flip = frame_data[1];
+    var sw = this.rect.w;
+    var sh = this.rect.h;
+    var dw = this.rect.w;
+    var dh = this.rect.h;
+    var dx = this.rect.x;
+    var dy = this.rect.y; 
+    if(flip){
+        context.save();
+        context.scale(-1,1);
+        context.drawImage(this.sheet, x, 0, sw, sh, -dx-dw, dy, dw, dh);
+        context.restore();
+    }
+    else
+        context.drawImage(this.sheet, x, 0, sw, sh, dx, dy, dw, dh);    
 };
      
       
@@ -118,16 +160,16 @@ FOUR.GameLoop = function(context){
     var size = [this.context.canvas.width, this.context.canvas.height];
     this.contextRect = new RECT.Rect(0, 0, size[0], size[1]);
     this.fps = 60;
-    this.interval = 1000/this.fps;
-    this.player = new FOUR.Player([50,50], "red", 3);
+    this.lastTime = 0;
+    this.player = new FOUR.Player([50,50], 180, "down");
     this.mainLoop = this.mainLoop.bind(this);
 };
 
-FOUR.GameLoop.prototype.update = function(){
+FOUR.GameLoop.prototype.update = function(time, delta){
     /*
      * Update all actors, called every frame.
      */
-    this.player.update(this.contextRect);
+    this.player.update(time, delta, this.contextRect);
 };
 
 FOUR.GameLoop.prototype.render = function(){
@@ -139,20 +181,18 @@ FOUR.GameLoop.prototype.render = function(){
     this.player.draw(this.context);
 };
 
-FOUR.GameLoop.prototype.mainLoop = function(){
+FOUR.GameLoop.prototype.mainLoop = function(time){
     /*
-     * Update and render the scene.  This function is called by setInterval
-     * and must be bound to 'this' (see constructor).
+     * Update and render the scene.  This function is called by 
+     * requestAnimationFrame() and must be bound to 'this' (see constructor).
      */
-    this.update();
+    if(!this.lastTime)
+        this.lastTime = time;
+    var delta = (time-this.lastTime)/1000;
+    this.lastTime = time;
+    this.update(time, delta);
     this.render();
-};
-
-FOUR.GameLoop.prototype.start = function(){
-    /*
-     * Sets the mainLoop to be called every interval.
-     */
-    setInterval(this.mainLoop, this.interval);
+    requestAnimationFrame(this.mainLoop);
 };
 
 
@@ -164,7 +204,7 @@ FOUR.run = function(){
     var canvas = document.getElementById("topCanvas");
     var context = canvas.getContext('2d');
     var loop = new FOUR.GameLoop(context);
-    loop.start();
+    requestAnimationFrame(loop.mainLoop);
 };
 
 

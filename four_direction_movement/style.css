@@ -19,8 +19,8 @@ body {
 
 .canvas {
     margin: 20px;
-    background-color : lightgray;
-    border : 5px dashed darkslateblue;
+    background-color : darkslategrey;
+    border : 5px solid lightgrey;
     border-radius: 5%;
     display : inline-block;
 }
