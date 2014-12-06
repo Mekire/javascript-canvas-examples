@@ -5,42 +5,25 @@
  */
 
 
-function Rect(x, y, w, h) {
-    /**
-     * A basic object to keep track of a sprite's location and dimensions.
-     * Accepts four integers for x-location, y-location, width, and height.
-     */
-    this.x = x;
-    this.y = y;
-    this.w = w;
-    this.h = h;
-}
-
-Rect.prototype.collidePoint = function(x,y){
-    /* 
-     * Check if a point (given by x and y) overlaps the rectangle.
-     * The left and top edge are inclusive; the bottom and right edge are not.
-     */
-    return ((this.x <= x && x < this.x+this.w) &&
-            (this.y <= y && y < this.y+this.h));
-};
+//Namespace
+var DRAG = {};
 
 
-function Player(pos, color){
+DRAG.Player = function(pos, color){
     /**
      * Our basic player object. Arguments are a two element array for position
      * (eg [0, 50]), and a color string.
      */
-    this.rect = new Rect(pos[0], pos[1], 100, 100);
+    this.rect = new RECT.Rect(pos[0], pos[1], 100, 100);
     this.color = color;
     this.hover = false;
     this.click = false;
     this.text_center = {x: null, y: null};
     document.addEventListener('mousedown',this.onClick.bind(this,true), false);
     document.addEventListener('mouseup', this.onClick.bind(this,false), false);
-}
+};
 
-Player.prototype.onClick = function(val, event){
+DRAG.Player.prototype.onClick = function(val, event){
     /* 
      * If the user left clicks on the rectangle set click to true.
      * If the left mouse button is released at anytime, set click to false.
@@ -53,7 +36,7 @@ Player.prototype.onClick = function(val, event){
     }
 };
 
-Player.prototype.update = function(mouse){
+DRAG.Player.prototype.update = function(mouse, contextRect){
     /*
      * Set hover based on collision with the mouse position.
      * If the player is currently clicked, update position based on the
@@ -61,14 +44,14 @@ Player.prototype.update = function(mouse){
      */
     this.hover = this.rect.collidePoint(mouse.x, mouse.y);
     if(this.click){
-        this.rect.x += mouse.rel.x;
-        this.rect.y += mouse.rel.y;
+        this.rect.moveIP(mouse.rel.x, mouse.rel.y);
+        this.rect.clampIP(contextRect);
     }
     this.text_center.x = this.rect.x+Math.floor(this.rect.w/2);
     this.text_center.y = this.rect.y+this.rect.h+30;
 };
 
-Player.prototype.renderText = function(message, context){
+DRAG.Player.prototype.renderText = function(message, context){
     /*
      * Render a simple message beneath the square.
      */
@@ -78,7 +61,7 @@ Player.prototype.renderText = function(message, context){
     context.fillText(message, this.text_center.x, this.text_center.y);
 };
 
-Player.prototype.draw = function(context){
+DRAG.Player.prototype.draw = function(context){
     /*
      * Draws our player to the screen (a lovable rectangle).
      * Pass the desired context.
@@ -94,21 +77,33 @@ Player.prototype.draw = function(context){
 };
 
 
-function Mouse(canvas) {
+DRAG.Mouse = function(canvas) {
     /*
      * A class to keep track of mouse state.
      * Pass the bounding rect of relevant canvas on construction.
      */
     this.canvas = canvas;
+    this.boundingRect = this.canvas.getBoundingClientRect();
+    this.clientX = null;
+    this.clientY = null;
     this.x = null; 
     this.y = null; 
     this.oldX = null;
     this.oldY = null;
     this.rel = {x: 0, y: 0};
     document.addEventListener('mousemove', this.onMove.bind(this), false);
-}
+    document.addEventListener('scroll', this.onChange.bind(this), false);
+    window.addEventListener('resize', this.onChange.bind(this), false);
+};
 
-Mouse.prototype.update = function(){
+DRAG.Mouse.prototype.onChange = function(){
+    /*
+     * Update the client bounding rect on resize or scroll events.
+     */
+    this.boundingRect = this.canvas.getBoundingClientRect();
+};
+
+DRAG.Mouse.prototype.update = function(){
     /* 
      * This function calculates the relative mouse position offset between
      * the current and previous frame.  Must be called each frame from the
@@ -124,37 +119,40 @@ Mouse.prototype.update = function(){
     }
 };
 
-Mouse.prototype.onMove = function(event){
+DRAG.Mouse.prototype.onMove = function(event){
     /*
      * Set the mouse position relative to the canvas.
      */
-    var boundingRect = this.canvas.getBoundingClientRect();
-    this.x = event.clientX-boundingRect.left;
-    this.y = event.clientY-boundingRect.top;
+    this.clientX = event.clientX;
+    this.clientY = event.clientY;
+    this.x = event.clientX-this.boundingRect.left;
+    this.y = event.clientY-this.boundingRect.top;
 };
       
       
-function GameLoop(){
+DRAG.GameLoop = function(){
     /*
      * The primary control flow for our program is managed by this object.
      */
     this.canvas = document.getElementById("topCanvas");
     this.context = this.canvas.getContext('2d');
+    var size = [this.context.canvas.width, this.context.canvas.height];
+    this.contextRect = new RECT.Rect(0, 0, size[0], size[1]);
     this.fps = 60;
-    this.mouse = new Mouse(this.canvas);
-    this.player = new Player([200,100], "red");
+    this.mouse = new DRAG.Mouse(this.canvas);
+    this.player = new DRAG.Player([200,100], "red");
     this.mainLoop = this.mainLoop.bind(this);
-}
+};
 
-GameLoop.prototype.update = function(){
+DRAG.GameLoop.prototype.update = function(){
     /*
      * Update the mouse and any actors; called every frame.
      */
     this.mouse.update();
-    this.player.update(this.mouse, this.context);
+    this.player.update(this.mouse, this.contextRect);
 };
 
-GameLoop.prototype.render = function(){
+DRAG.GameLoop.prototype.render = function(){
     /*
      * Render entire scene; called every frame.
      */
@@ -163,7 +161,7 @@ GameLoop.prototype.render = function(){
     this.player.draw(this.context);
 };
 
-GameLoop.prototype.mainLoop = function(){
+DRAG.GameLoop.prototype.mainLoop = function(){
     /*
      * Update and render the scene.  This function is called by setInterval
      * and must be bound to 'this' (see constructor).
@@ -172,7 +170,7 @@ GameLoop.prototype.mainLoop = function(){
     this.render();
 };
 
-GameLoop.prototype.start = function(){
+DRAG.GameLoop.prototype.start = function(){
     /*
      * Sets the mainLoop to be called every interval.
      */
@@ -180,10 +178,10 @@ GameLoop.prototype.start = function(){
 };
 
 
-function run(){
-    var loop = new GameLoop();
+DRAG.run = function(){
+    var loop = new DRAG.GameLoop();
     loop.start();
-}
+};
 
 
-window.onload = run;
+window.onload = DRAG.run;
