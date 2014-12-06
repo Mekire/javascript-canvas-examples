@@ -110,12 +110,12 @@ DRAG.Mouse.prototype.update = function(){
      * main loop.
      */
     if(this.x !== null && this.y !== null){
-        if(this.oldX !== null && this.oldY !== null){
-            this.rel.x = this.x-this.oldX;
-            this.rel.y = this.y-this.oldY;
-        }
-        this.oldX = this.x;
-        this.oldY = this.y;
+        this.rel.x = (this.oldX !== null) ? this.x-this.oldX : 0;
+        this.rel.y = (this.oldY !== null) ? this.y-this.oldY : 0;
+        this.oldX = (this.boundingRect.left<this.clientX &&
+                     this.clientX<this.boundingRect.right) ? this.x : null;
+        this.oldY = (this.boundingRect.top<this.clientY &&
+                     this.clientY<this.boundingRect.bottom) ? this.y : null;
     }
 };
 
