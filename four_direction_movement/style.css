@@ -20,7 +20,7 @@ body {
 .canvas {
     margin: 20px;
     background-color : darkslategrey;
-    border : 5px solid lightgrey;
-    border-radius: 5%;
+    border : 5px solid black;
+    border-radius: 2%;
     display : inline-block;
 }
