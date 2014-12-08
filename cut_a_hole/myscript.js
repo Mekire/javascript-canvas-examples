@@ -1,28 +1,28 @@
 /*
- * A simple sprite that can be moved in the four orthogonal directions.
- * Instead of a simple rectangle, our player is now an animated sprite.
- * Obstacles have also been added with which the player can collide.
+ * This script experiments with cutting a transparent hole in an overlayed
+ * surface.
  */
 
 
 // Namespace
 var HOLE = {};
 
-
-
-
-
-
-        
+  
 HOLE.OverLay = function(w, h, radius){
     /*
-     * A very basic obstacle for the player to collide with.
+     * An overlay image to draw on top of the current display canvas.
      */
     this.radius = radius;
+    this.w = w;
+    this.h = h;
     this.image = this.makeImage(w, h);
 };
 
 HOLE.OverLay.prototype.makeImage = function(w, h){
+    /*
+     * Creates a new canvas element that can be drawn to without effecting
+     * the canvas displayed on the screen.
+     */
     var canvas = document.createElement('canvas');
     canvas.width = w;
     canvas.height = h;
@@ -30,22 +30,28 @@ HOLE.OverLay.prototype.makeImage = function(w, h){
 };
 
 HOLE.OverLay.prototype.update = function(mouse){
+    /*
+     * Fill the overlay image surface and then punch a hole in it using the
+     * context.globalCompositeOperation attribute of 'destination-out'.
+     */
     var context = this.image.getContext('2d');
-    context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-    context.fillStyle = "rgba(0,0,0,0.9)";
-    context.fillRect(0, 0, context.canvas.width, context.canvas.height);
+    context.clearRect(0, 0, this.w, this.h);
+    context.fillStyle = "rgba(0, 0, 0, 0.9)";
+    context.fillRect(0, 0, this.w, this.h);
     if(mouse.x !== null && mouse.y !== null){
         context.beginPath();
+        context.fillStyle = "rgba(0, 0, 0, 1)";
         context.globalCompositeOperation = 'destination-out';
         context.arc(mouse.x, mouse.y, this.radius, 0, Math.PI*2);
         context.fill();
         context.globalCompositeOperation = 'source-over';
     }
-    var data = context.getImageData(50, 50, 1, 1).data;
-    console.log("("+data[0]+", "+data[1]+", "+data[2]+", "+data[3]+")");
 };
 
 HOLE.OverLay.prototype.draw = function(context){
+    /*
+     * Draw the overlay canvas on to another canvas context.
+     */
     context.drawImage(this.image, 0, 0);  
 };
 
@@ -53,7 +59,8 @@ HOLE.OverLay.prototype.draw = function(context){
 HOLE.Mouse = function(canvas) {
     /*
      * A class to keep track of mouse state.
-     * Pass the bounding rect of relevant canvas on construction.
+     * Must be passed the canvas on which it is being used in order to keep
+     * track of the bounding client rect.
      */
     this.canvas = canvas;
     this.boundingRect = this.canvas.getBoundingClientRect();
@@ -66,7 +73,7 @@ HOLE.Mouse = function(canvas) {
 
 HOLE.Mouse.prototype.onChange = function(){
     /*
-     * Update the client bounding rect on resize or scroll events.
+     * Update the bounding client rect on resize or scroll events.
      */
     this.boundingRect = this.canvas.getBoundingClientRect();
 };
@@ -86,9 +93,6 @@ HOLE.GameLoop = function(context){
      */
     this.context = context;
     var size = [this.context.canvas.width, this.context.canvas.height];
-    this.contextRect = new RECT.Rect(0, 0, size[0], size[1]);
-    this.fps = 60;
-    this.lastTime = 0;
     this.background = new Image();
     this.background.src = "frac.png";
     this.mouse = new HOLE.Mouse(this.context.canvas);
@@ -96,9 +100,9 @@ HOLE.GameLoop = function(context){
     this.mainLoop = this.mainLoop.bind(this);
 };
 
-HOLE.GameLoop.prototype.update = function(time, delta){
+HOLE.GameLoop.prototype.update = function(){
     /*
-     * Update all actors, called every frame.
+     * Update the overlay based on mouse position.
      */
     this.overLay.update(this.mouse);
 };
@@ -111,16 +115,12 @@ HOLE.GameLoop.prototype.render = function(){
     this.overLay.draw(this.context);
 };
 
-HOLE.GameLoop.prototype.mainLoop = function(time){
+HOLE.GameLoop.prototype.mainLoop = function(){
     /*
      * Update and render the scene.  This function is called by 
      * requestAnimationFrame() and must be bound to 'this' (see constructor).
      */
-    if(!this.lastTime)
-        this.lastTime = time;
-    var delta = (time-this.lastTime)/1000;
-    this.lastTime = time;
-    this.update(time, delta);
+    this.update();
     this.render();
     requestAnimationFrame(this.mainLoop);
 };
