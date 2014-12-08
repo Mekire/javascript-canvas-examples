@@ -129,10 +129,7 @@ FOUR.Player.prototype.onKey = function(val, event){
     var direction = FOUR.KEY_CODES[event.keyCode];
     if (typeof direction === 'undefined')
         return;
-    if(val)
-        this.addDirection(direction);
-    else
-        this.popDirection(direction);
+    val ? this.addDirection(direction) : this.popDirection(direction);
     event.preventDefault && event.preventDefault();
     event.stopPropagation && event.stopPropagation();
 };
@@ -212,8 +209,8 @@ FOUR.Player.prototype.draw = function(context){
     var sh = this.rect.h;
     var dw = this.rect.w;
     var dh = this.rect.h;
-    var dx = this.rect.x;
-    var dy = this.rect.y; 
+    var dx = Math.floor(this.rect.x);
+    var dy = Math.floor(this.rect.y); 
     if(flip){
         context.save();
         context.scale(-1,1);
