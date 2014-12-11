@@ -12,7 +12,7 @@ SHOOT.TURRET_IMAGE = new Image();
 SHOOT.TURRET_IMAGE.src = "turret.png";
 
 
-SHOOT.Turret = function(pos, angle, initialImageAngle){
+SHOOT.Turret = function(pos, angle, initialImageAngle, projectiles){
     /*
      * Our friendly turret.
      */
@@ -23,6 +23,19 @@ SHOOT.Turret = function(pos, angle, initialImageAngle){
     if(typeof angle === 'undefined')
         angle = this.initialImageAngle;
     this.angle = angle-this.initialImageAngle;
+    this.projectiles = projectiles || [];
+    document.addEventListener('mousedown',this.onClick.bind(this), false);
+};
+
+SHOOT.Turret.prototype.onClick = function(event){
+    /*
+     * If user left clicks, add a laser to the projectile array.
+     */
+    if(event.which === 1){
+        var pos = this.rect.topleft;
+        var imageAngle = this.initialImageAngle;
+        this.projectiles.push(new SHOOT.Laser(pos, this.angle, imageAngle));
+    }
 };
 
 SHOOT.Turret.prototype.update = function(mouse){
@@ -47,10 +60,8 @@ SHOOT.Turret.prototype.draw = function(context){
     var dh = this.rect.h;
     var dx = this.rect.x;
     var dy = this.rect.y; 
-    
     var sx = this.images["base"];
     context.drawImage(this.sheet, sx, 0, sw, sh, dx, dy, dw, dh);
-    
     context.save();
     context.translate(this.rect.centerx, this.rect.centery);
     context.rotate(this.angle);
@@ -61,6 +72,51 @@ SHOOT.Turret.prototype.draw = function(context){
     context.restore();   
 };
      
+
+SHOOT.Laser = function(pos, angle, initialImageAngle){
+    /*
+     * A lovable laser.
+     */
+    this.rect = new RECT.Rect(pos[0], pos[1], 150, 150);
+    this.sheet = SHOOT.TURRET_IMAGE;
+    this.speed = 200;
+    this.image = 150;
+    this.initialImageAngle = initialImageAngle || 0;
+    this.angle = angle;
+    this.vector = [this.speed*Math.cos(angle+this.initialImageAngle), 
+                   this.speed*Math.sin(angle+this.initialImageAngle)];
+    this.dead = false;
+};
+
+SHOOT.Laser.prototype.update = function(delta, boundingRect){
+    /*
+     * Update the laser's position.  If the laser leaves the screen, set its
+     * this.dead attribute to true.
+     */
+    this.rect.x += this.vector[0]*delta;
+    this.rect.y += this.vector[1]*delta;
+    if(!boundingRect.collideRect(this.rect))
+        this.dead = true;
+};
+
+SHOOT.Laser.prototype.draw = function(context){
+    /*
+     * Draw the bolt rotated appropriately.
+     */
+    var sw = this.rect.w;
+    var sh = this.rect.h;
+    var dw = this.rect.w;
+    var dh = this.rect.h;
+    var dx = -this.rect.w/2;
+    var dy = -this.rect.h/2;
+    var sx = this.image;
+    context.save();
+    context.translate(this.rect.centerx, this.rect.centery);
+    context.rotate(this.angle);
+    context.drawImage(this.sheet, sx, 0, sw, sh, dx, dy, dw, dh);
+    context.restore();   
+};
+
 
 SHOOT.Mouse = function(canvas) {
     /*
@@ -102,16 +158,28 @@ SHOOT.GameLoop = function(context){
     this.contextRect = new RECT.Rect(0, 0, size[0], size[1]);
     this.lastTime = 0;
     this.mouse = new SHOOT.Mouse(this.context.canvas);
-    this.turret = new SHOOT.Turret((0,0), 0, SHOOT.INITIAL_IMAGE_ANGLE);
+    this.turret = new SHOOT.Turret([0,0],Math.PI/4,SHOOT.INITIAL_IMAGE_ANGLE);
     this.turret.rect.center = this.contextRect.center;
+    this.lasers = [];
+    this.turret.projectiles = this.lasers;
     this.mainLoop = this.mainLoop.bind(this);
 };
 
 SHOOT.GameLoop.prototype.update = function(time, delta){
     /*
      * Update all actors, called every frame.
+     * Lasers are removed from the laser list if their dead attribute is set
+     * to true after updating.
      */
     this.turret.update(this.mouse);
+    var i = 0;
+    while(i<this.lasers.length){
+        this.lasers[i].update(delta, this.contextRect);
+        if(this.lasers[i].dead)
+            this.lasers.splice(i,1);
+        else
+            i++;
+    }
 };
 
 SHOOT.GameLoop.prototype.render = function(){
@@ -121,6 +189,8 @@ SHOOT.GameLoop.prototype.render = function(){
     this.context.clearRect(0,0,this.context.canvas.width,
                            this.context.canvas.height);
     this.turret.draw(this.context);
+    for(var i=0; i<this.lasers.length; i++)
+        this.lasers[i].draw(this.context);
 };
 
 SHOOT.GameLoop.prototype.mainLoop = function(time){
