@@ -8,14 +8,17 @@
  */
 
 
-var DIRECT_DICT = {left: {x: -1, y: 0}, right: {x: 1, y: 0},
-                   up: {x: 0, y: -1}, down: {x:0, y: 1}};
+var EIGHT = {};
 
 
-var ANGLE_UNIT_SPEED = Math.sqrt(2)/2;
+EIGHT.DIRECT_DICT = {left: {x: -1, y: 0}, right: {x: 1, y: 0},
+                     up: {x: 0, y: -1}, down: {x:0, y: 1}};
 
 
-function Player(pos, color, speed){
+EIGHT.ANGLE_UNIT_SPEED = Math.sqrt(2)/2;
+
+
+EIGHT.Player = function(pos, color, speed){
     /*
      * Our basic player object. Arguments are a two element array for position
      * (eg [0, 50]), a color string, and the speed per frame (an integer).
@@ -23,29 +26,29 @@ function Player(pos, color, speed){
     this.rect = new RECT.Rect(pos[0], pos[1], 30, 30);
     this.color = color;
     this.speed = speed;
-}
+};
 
-Player.prototype.update = function(key_states, contextRect){
+EIGHT.Player.prototype.update = function(key_states, delta, contextRect){
     /*
      * The players update function to be run every frame.
-     * Should be passed a Controls.state object and the valid context.
+     * Should be passed a EIGHT.Controls.state object and the valid context.
      * The key states will be looped through and the pertinent position
      * of the players rect will be adjusted.
      */
     var vector = {x: 0, y: 0};
     for(var state in key_states){
         if(key_states[state]){
-            vector.x += DIRECT_DICT[state].x;
-            vector.y += DIRECT_DICT[state].y;   
+            vector.x += EIGHT.DIRECT_DICT[state].x;
+            vector.y += EIGHT.DIRECT_DICT[state].y;   
         }
     }
-    var unit_speed = (vector.x && vector.y) ? ANGLE_UNIT_SPEED : 1;
-    this.rect.x += unit_speed*this.speed*vector.x;
-    this.rect.y += unit_speed*this.speed*vector.y;
+    var unit_speed = (vector.x && vector.y) ? EIGHT.ANGLE_UNIT_SPEED : 1;
+    this.rect.x += unit_speed*this.speed*vector.x*delta;
+    this.rect.y += unit_speed*this.speed*vector.y*delta;
     this.rect.clampIP(contextRect);
 };
 
-Player.prototype.draw = function(context){
+EIGHT.Player.prototype.draw = function(context){
     /*
      * Draws our player to the screen (a lovable rectangle).
      * Pass the desired context.
@@ -60,7 +63,7 @@ Player.prototype.draw = function(context){
 };
 
 
-function Controls() {
+EIGHT.Controls = function() {
     /*
      * This class manages user input.
      */
@@ -68,13 +71,13 @@ function Controls() {
     this.states = {'left': false, 'right': false, 'up': false, 'down': false};
     document.addEventListener('keydown', this.onKey.bind(this, true), false);
     document.addEventListener('keyup', this.onKey.bind(this, false), false);
-}
+};
 
-Controls.prototype.onKey = function(val, event){
+EIGHT.Controls.prototype.onKey = function(val, event){
     /*
      * Function called on both keyup and keydown events.
-     * If the keyCode is found in the objects Controls.codes object then
-     * the pertinent state will be set in the Controls.states object.
+     * If the keyCode is found in the objects EIGHT.Controls.codes object then
+     * the pertinent state will be set in the EIGHT.Controls.states object.
      */
     var state = this.codes[event.keyCode];
     if (typeof state === 'undefined')
@@ -85,28 +88,27 @@ Controls.prototype.onKey = function(val, event){
 };
       
       
-function GameLoop(context){
+EIGHT.GameLoop = function(context){
     /*
      * The primary control flow for our program is managed by this object.
      */
     this.context = context;
     var size = [this.context.canvas.width, this.context.canvas.height];
     this.contextRect = new RECT.Rect(0, 0, size[0], size[1]);
-    this.fps = 60;
-    this.interval = 1000/this.fps;
-    this.controls = new Controls();
-    this.player = new Player([50,50], "red", 3);
+    this.lastTime = 0;
+    this.controls = new EIGHT.Controls();
+    this.player = new EIGHT.Player([50,50], "red", 180);
     this.mainLoop = this.mainLoop.bind(this);
-}
+};
 
-GameLoop.prototype.update = function(){
+EIGHT.GameLoop.prototype.update = function(time, delta){
     /*
      * Update all actors, called every frame.
      */
-    this.player.update(this.controls.states, this.contextRect);
+    this.player.update(this.controls.states, delta, this.contextRect);
 };
 
-GameLoop.prototype.render = function(){
+EIGHT.GameLoop.prototype.render = function(){
     /*
      * Render entire scene, called every frame.
      */
@@ -115,33 +117,30 @@ GameLoop.prototype.render = function(){
     this.player.draw(this.context);
 };
 
-GameLoop.prototype.mainLoop = function(){
+EIGHT.GameLoop.prototype.mainLoop = function(time){
     /*
-     * Update and render the scene.  This function is called by setInterval
-     * and must be bound to 'this' (see constructor).
+     * Update and render the scene.  This function is called by 
+     * requestAnimationFrame() and must be bound to 'this' (see constructor).
      */
-    this.update();
+    if(!this.lastTime)
+        this.lastTime = time;
+    var delta = (time-this.lastTime)/1000;
+    this.lastTime = time;
+    this.update(time, delta);
     this.render();
+    requestAnimationFrame(this.mainLoop);
 };
 
-GameLoop.prototype.start = function(){
-    /*
-     * Sets the mainLoop to be called every interval.
-     */
-    setInterval(this.mainLoop, this.interval);
-};
-
-
-function run(){
+EIGHT.run = function(){
     /*
      * Grabs the canvas from the DOM; creates a context; creates a mainLoop;
      * and gets us started.
      */
     var canvas = document.getElementById("topCanvas");
     var context = canvas.getContext('2d');
-    var loop = new GameLoop(context);
-    loop.start();
-}
+    var loop = new EIGHT.GameLoop(context);
+    requestAnimationFrame(loop.mainLoop);
+};
 
 
-window.onload = run;
+window.onload = EIGHT.run;
