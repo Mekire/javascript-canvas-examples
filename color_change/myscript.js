@@ -4,16 +4,20 @@
  */
 
 
-function App(){
+//Namespace
+var CHANGE = {};
+
+
+CHANGE.App = function(){
     /*
      * Create our canvas and context and add an event listener.  
      */
     var canvas = document.getElementById("topCanvas");
     this.context = canvas.getContext('2d');
     document.addEventListener('mousedown', this.onClick.bind(this), false);
-}
+};
 
-App.prototype.onClick = function(event){
+CHANGE.App.prototype.onClick = function(event){
     /*
      * If the event is a left mouse click, randomly generate a new color
      * and call the fill() method.
@@ -27,7 +31,7 @@ App.prototype.onClick = function(event){
     }
 };
 
-App.prototype.fill = function(color){
+CHANGE.App.prototype.fill = function(color){
     /*
      * Fill the canvas with the new color.
      */
@@ -37,8 +41,9 @@ App.prototype.fill = function(color){
 };
 
 
-function run(){
-    new App();
-}
+CHANGE.run = function(){
+    new CHANGE.App();
+};
 
-window.onload = run;
+
+window.onload = CHANGE.run;
