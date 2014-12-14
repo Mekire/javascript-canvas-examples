@@ -7,10 +7,15 @@
 // Namespace
 var HOLE = {};
 
+HOLE.BACKGROUND_IMAGE = new Image();
+HOLE.BACKGROUND_IMAGE.src = "frac.png";
+
   
 HOLE.OverLay = function(w, h, radius){
     /*
      * An overlay image to draw on top of the current display canvas.
+     * Arguments w and h are integer sizes of the entire overlayed area;
+     * radius is the radius of the transparent hole drawn on top.
      */
     this.radius = radius;
     this.w = w;
@@ -93,8 +98,7 @@ HOLE.GameLoop = function(context){
      */
     this.context = context;
     var size = [this.context.canvas.width, this.context.canvas.height];
-    this.background = new Image();
-    this.background.src = "frac.png";
+    this.background = HOLE.BACKGROUND_IMAGE;
     this.mouse = new HOLE.Mouse(this.context.canvas);
     this.overLay = new HOLE.OverLay(size[0], size[1], 100);
     this.mainLoop = this.mainLoop.bind(this);
