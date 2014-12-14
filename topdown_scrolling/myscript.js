@@ -9,16 +9,10 @@
 
 var TOP = {};
 
-
-TOP.FACE_IMAGE = new Image();
-TOP.FACE_IMAGE.src = "smallface.png";
-TOP.POND_IMAGE = new Image();
-TOP.POND_IMAGE.src = "pond.png";
-
+TOP.NUMBER_OF_GRAPHICS = 2;
 
 TOP.DIRECT_DICT = {left: [-1,0], right: [1,0],
                    up: [0,-1], down: [0,1]};
-
 
 TOP.ANGLE_UNIT_SPEED = Math.sqrt(2)/2;
 
@@ -88,7 +82,6 @@ TOP.Player.prototype.checkMask = function(level, threshold){
     var data = context.getImageData(0, 0, w, h).data;
     for(var i=0;i<data.length; i+= 4)
         if(!(data[i+3] <= tolerance)){
-            console.log(data[i+3]);
             return true;
         }
     return false;
@@ -208,4 +201,36 @@ TOP.run = function(){
 };
 
 
-window.onload = TOP.run;
+TOP.makeImage = function(loadCheckArray){
+    /*
+     * Create a new image and set crossOrigin.  This allows us to examine
+     * pixels in the loaded imaage if it is from a CDN which allows this.
+     * We also set the image.onload so that the program is started only
+     * after all images have definitely loaded.
+     */
+    var image = new Image();
+    image.crossOrigin = "Anonymous";
+    image.onload = function(){
+        loadCheckArray.push(true);
+        if(loadCheckArray.length === TOP.NUMBER_OF_GRAPHICS)
+            TOP.run();
+    };
+    return image;
+};
+
+
+TOP.prepare = function(){
+    /*
+     * Create images and set their src attributes.  The run function itself
+     * is run by image.onload once the number of images loaded is equal
+     * to NUMBER_OF_GRAPHICS.
+     */
+    var graphicsLoaded = [];
+    TOP.FACE_IMAGE = TOP.makeImage(graphicsLoaded);
+    TOP.FACE_IMAGE.src = "smallface.png";
+    TOP.POND_IMAGE = TOP.makeImage(graphicsLoaded);
+    TOP.POND_IMAGE.src = "pond.png";
+};
+
+
+TOP.prepare();
