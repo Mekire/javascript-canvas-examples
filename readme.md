@@ -16,6 +16,8 @@ Due to my inexperience with the language, some of the approaches I take may be s
 [Cut a Hole: with trails](http://jsfiddle.net/Mekire/L1zymfh7/embedded/result/)  
 [Tank Turret](http://jsfiddle.net/Mekire/z3aqbxd0/embedded/result/)  
 [Topdown Scrolling (pixel perfect)](http://jsfiddle.net/Mekire/5ez5whvf/embedded/result/)  
+[Platforming (basic)](http://jsfiddle.net/Mekire/bjhzkdac/embedded/result/)  
+
 
 
 ### Note on cloning:  
