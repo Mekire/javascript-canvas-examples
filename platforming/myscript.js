@@ -81,7 +81,7 @@ PF._Physics = function(){
 };
 
 PF._Physics.prototype.physicsUpdate = function(delta){
-    this.fall ? this.yVel += this.grav*delta : this.yVel = 0;
+    this.fall ? this.yVel += this.grav : this.yVel = 0;
 };
 
 
@@ -122,19 +122,21 @@ PF.Player.prototype.checkCollisions = function(offset, index, obstacles){
     var unaltered = true;
     this.rect.moveIP(offset[0], offset[1]);
     while(PF.spriteCollideAny(this, obstacles)){
-        this.rect[index] += offset[index] ? 1 : -1;
+        this.rect[index] += offset[index]<0 ? 1 : -1;
         this.rect[index] = Math.floor(this.rect[index]);
         unaltered = false;
     }
     return unaltered;
 };
 
-PF.Player.prototype.checkKeys = function(keyState, delta){
+PF.Player.prototype.checkKeys = function(keyState){
     this.xVel = 0;
     if(keyState["left"])
-        this.xVel -= this.speed*delta;
-    if(keyState["right"])
-        this.xVel += this.speed*delta;
+        this.xVel -= this.speed;
+    if(keyState["right"]){
+        console.log("oi");
+        this.xVel += this.speed;
+    }
     if(keyState["jump"])
         this.jump();
 };
@@ -147,7 +149,7 @@ PF.Player.prototype.jump = function(){
 };
 
 PF.Player.prototype.update = function(keyState, obstacles, delta){
-    this.checkKeys(keyState, delta);
+    this.checkKeys(keyState);
     this.getPosition(obstacles, delta);
     this.physicsUpdate(delta);
 };
@@ -191,7 +193,7 @@ PF.GameLoop = function(context){
     this.contextRect = new RECT.Rect(0, 0, size[0], size[1]);
     this.lastTime = 0;
     this.controls = new PF.Controls();
-    this.player = new PF.Player([50,75], 240);
+    this.player = new PF.Player([50,-25], 240);
     this.blocks = this.makeBlocks();
     this.mainLoop = this.mainLoop.bind(this);
 };
@@ -204,7 +206,8 @@ PF.GameLoop.prototype.makeBlocks = function(){
                   new PF.Block(300,250), 
                   new PF.Block(150,150)];
     for(var i=0; i<this.contextRect.w; i+=50){
-        blocks.push(new PF.Block(i,0));
+        if(i !== 50)
+            blocks.push(new PF.Block(i,0));
         blocks.push(new PF.Block(i,this.contextRect.bottom-50));
     }
     for(var j=50; j<this.contextRect.h-50; j+=50){
@@ -218,7 +221,7 @@ PF.GameLoop.prototype.update = function(time, delta){
     /*
      * Update all actors, called every frame.
      */
-    this.player.update(this.controls, this.blocks, delta);
+    this.player.update(this.controls.states, this.blocks, delta);
 };
 
 PF.GameLoop.prototype.render = function(){
