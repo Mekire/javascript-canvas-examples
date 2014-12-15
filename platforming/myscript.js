@@ -1,9 +1,5 @@
 /*
- * This sample demonstrates topdown scrolling.  The viewport is constrained
- * so that the player only moves off center near the edges of the map.
- * Pixel perfect collision is implemented via surface compositing.
- * More experimentation is needed to determine whether this approach can
- * be used in more complex programs.
+ * A very basic platformer.
  */
 
 
@@ -15,8 +11,8 @@ PF.KEY_CODES = {37: 'left', 38: 'up', 39: 'right', 40: 'down', 32: 'jump'};
 
 PF.getRandomColor = function(){
     /*
-    * Returns a random rgb color string.
-    */
+     * Returns a random rgb color string.
+     */
     var color = [];
     for(var i=0; i<3; i++){
         color.push(Math.floor(Math.random()*256));
@@ -75,14 +71,21 @@ PF.Block.prototype.draw = function(context){
 
 
 PF._Physics = function(){
+    /*
+     * A simple physics class that the player will inherit from.
+     */
     this.xVel = 0;
     this.yVel = 0;
-    this.grav = 13.2;
+    this.grav = 600;
     this.fall = false;
 };
 
 PF._Physics.prototype.physicsUpdate = function(delta){
-    this.fall ? this.yVel += this.grav : this.yVel = 0;
+    /*
+     * If the player is falling, apply gravity; else make sure vertical
+     * velocity is set to zero.
+     */
+    this.fall ? this.yVel += this.grav*delta : this.yVel = 0;
 };
 
 
@@ -91,33 +94,40 @@ PF.Player = function(pos, speed){
      * Our basic player object. Arguments are a two element array for position
      * (eg [0, 50]), and speed in pixels per second.
      */
-    PF._Physics.call(this);
+    PF._Physics.call(this); //Call Physics constructor.
     this.image = PF.FACE_IMAGE;
     var w = this.image.width;
     var h = this.image.height;
     this.rect = new RECT.Rect(pos[0], pos[1], w, h);
     this.speed = speed;
-    this.jumpPower = -510;
+    this.jumpPower = -400;
     this.canJump = undefined;
     this.doJump = false;
     document.addEventListener('keydown', this.onKey.bind(this, true), false);
     document.addEventListener('keyup', this.onKey.bind(this, false), false);
 };
 
+// Inherit from _Physics.
 PF.Player.prototype = new PF._Physics();
 PF.Player.constructor = PF.Player;
 
 PF.Player.prototype.onKey = function(val, event){
-    if(PF.KEY_CODES[event.keyCode] === 'jump'){
-        if(val){
-            this.doJump = true;
-        }
-        else 
-            this.canJump = true;
-    }
+    /*
+     * On jump key down set the variable doJump so that the player will attempt
+     * to jump the next update cycle.
+     * On jump key up set the variable canJump.
+     * The canJump attribute is used to prevent jumping via key repeat. 
+     */
+    if(PF.KEY_CODES[event.keyCode] === 'jump')
+        val ? this.doJump = true : this.canJump = true;
 };
 
 PF.Player.prototype.getPosition = function(obstacles, delta){
+    /*
+     * Check if the player is falling; then check for obstacles in the x and y
+     * directions.  The player's actual position is changed in the 
+     * checkCollisions method.
+     */
     if(!this.fall)
         this.checkFalling(obstacles);
     else
@@ -127,6 +137,10 @@ PF.Player.prototype.getPosition = function(obstacles, delta){
 };
 
 PF.Player.prototype.checkFalling = function(obstacles){
+    /*
+     * Check if the player is falling by doing a collision test 1 pixel below
+     * the current position.
+     */
     this.rect.moveIP(0, 1);
     if(!PF.spriteCollideAny(this, obstacles))
         this.fall = true;
@@ -136,6 +150,12 @@ PF.Player.prototype.checkFalling = function(obstacles){
 };
 
 PF.Player.prototype.checkCollisions = function(offset, index, obstacles){
+    /*
+     * Check for collision afteer moving the player by offset.
+     * If a collision is detected the player's position is decremented
+     * until clear.  Only one axis should be checked at a time, denoted by
+     * index. 
+     */
     var unaltered = true;
     this.rect.moveIP(offset[0], offset[1]);
     if(PF.spriteCollideAny(this, obstacles)){
@@ -148,6 +168,9 @@ PF.Player.prototype.checkCollisions = function(offset, index, obstacles){
 };
 
 PF.Player.prototype.checkKeys = function(keyState){
+    /*
+     * Change x velocity based on input from MainLoop.controls.
+     */
     this.xVel = 0;
     if(keyState["left"])
         this.xVel -= this.speed;
@@ -156,6 +179,11 @@ PF.Player.prototype.checkKeys = function(keyState){
 };
 
 PF.Player.prototype.jump = function(){
+    /*
+     * If the player is not currently falling and canJump is set,
+     * execute a jump.  doJump and canJump are set to false regardless to 
+     * prevent double jumping and jumping via keyboard repeat.
+     */
     if(this.canJump && !(this.fall)){
         this.yVel = this.jumpPower;
         this.fall = true;
@@ -165,6 +193,9 @@ PF.Player.prototype.jump = function(){
 };
 
 PF.Player.prototype.update = function(keyState, obstacles, delta){
+    /*
+     * Process input; move the player; and update physics.
+     */
     this.checkKeys(keyState);
     if(this.doJump)
         this.jump();
@@ -173,6 +204,10 @@ PF.Player.prototype.update = function(keyState, obstacles, delta){
 };
 
 PF.Player.prototype.draw = function(context){
+    /*
+     * Draw the player after flooring both x and y coordinates.
+     * Flooring prevents image distortion from subpixel rendering.
+     */
     var x = Math.floor(this.rect.x);
     var y = Math.floor(this.rect.y);
     context.drawImage(this.image, x, y);
@@ -226,6 +261,8 @@ PF.GameLoop.prototype.makeBlocks = function(){
     for(var i=0; i<this.contextRect.w; i+=50){
         if(i !== 50)
             blocks.push(new PF.Block(i,0));
+        if(i >= 500)
+            blocks.push(new PF.Block(i,175));
         blocks.push(new PF.Block(i,this.contextRect.bottom-50));
     }
     for(var j=50; j<this.contextRect.h-50; j+=50){
@@ -282,7 +319,7 @@ PF.run = function(){
 PF.makeImage = function(loadCheckArray){
     /*
      * Create a new image and set crossOrigin.  This allows us to examine
-     * pixels in the loaded imaage if it is from a CDN which allows this.
+     * pixels in the loaded image if it is from a CDN which allows this.
      * We also set the image.onload so that the program is started only
      * after all images have definitely loaded.
      */
