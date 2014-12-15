@@ -10,6 +10,7 @@
 var PF = {};
 
 PF.NUMBER_OF_GRAPHICS = 2;
+PF.KEY_CODES = {37: 'left', 38: 'up', 39: 'right', 40: 'down', 32: 'jump'};
 
 
 PF.getRandomColor = function(){
@@ -97,10 +98,24 @@ PF.Player = function(pos, speed){
     this.rect = new RECT.Rect(pos[0], pos[1], w, h);
     this.speed = speed;
     this.jumpPower = -510;
+    this.canJump = undefined;
+    this.doJump = false;
+    document.addEventListener('keydown', this.onKey.bind(this, true), false);
+    document.addEventListener('keyup', this.onKey.bind(this, false), false);
 };
 
 PF.Player.prototype = new PF._Physics();
 PF.Player.constructor = PF.Player;
+
+PF.Player.prototype.onKey = function(val, event){
+    if(PF.KEY_CODES[event.keyCode] === 'jump'){
+        if(val){
+            this.doJump = true;
+        }
+        else 
+            this.canJump = true;
+    }
+};
 
 PF.Player.prototype.getPosition = function(obstacles, delta){
     if(!this.fall)
@@ -115,16 +130,19 @@ PF.Player.prototype.checkFalling = function(obstacles){
     this.rect.moveIP(0, 1);
     if(!PF.spriteCollideAny(this, obstacles))
         this.fall = true;
+    else if(typeof this.canJump === 'undefined')
+        this.canJump = true;
     this.rect.moveIP(0, -1);
 };
 
 PF.Player.prototype.checkCollisions = function(offset, index, obstacles){
     var unaltered = true;
     this.rect.moveIP(offset[0], offset[1]);
-    while(PF.spriteCollideAny(this, obstacles)){
-        this.rect[index] += offset[index]<0 ? 1 : -1;
-        this.rect[index] = Math.floor(this.rect[index]);
+    if(PF.spriteCollideAny(this, obstacles)){
         unaltered = false;
+        this.rect[index] = Math.floor(this.rect[index]);
+        while(PF.spriteCollideAny(this, obstacles))
+            this.rect[index] += offset[index]<0 ? 1 : -1;
     }
     return unaltered;
 };
@@ -133,23 +151,23 @@ PF.Player.prototype.checkKeys = function(keyState){
     this.xVel = 0;
     if(keyState["left"])
         this.xVel -= this.speed;
-    if(keyState["right"]){
-        console.log("oi");
+    if(keyState["right"])
         this.xVel += this.speed;
-    }
-    if(keyState["jump"])
-        this.jump();
 };
 
 PF.Player.prototype.jump = function(){
-    if(!this.fall){
+    if(this.canJump && !(this.fall)){
         this.yVel = this.jumpPower;
         this.fall = true;
     }
+    this.doJump = false;
+    this.canJump = false;
 };
 
 PF.Player.prototype.update = function(keyState, obstacles, delta){
     this.checkKeys(keyState);
+    if(this.doJump)
+        this.jump();
     this.getPosition(obstacles, delta);
     this.physicsUpdate(delta);
 };
@@ -165,8 +183,7 @@ PF.Controls = function() {
     /*
      * This class manages user input.
      */
-    this.codes  = {37: 'left', 39: 'right', 32: 'jump'};
-    this.states = {'left': false, 'right': false, 'jump': false};
+    this.states = {'left': false, 'right': false};
     document.addEventListener('keydown', this.onKey.bind(this, true), false);
     document.addEventListener('keyup', this.onKey.bind(this, false), false);
 };
@@ -177,10 +194,11 @@ PF.Controls.prototype.onKey = function(val, event){
      * If the keyCode is found in the objects Controls.codes object then
      * the pertinent state will be set in the Controls.states object.
      */
-    var state = this.codes[event.keyCode];
+    var state = PF.KEY_CODES[event.keyCode];
     if (typeof state === 'undefined')
         return;
     this.states[state] = val;
+    event.preventDefault && event.preventDefault();
 };
 
 
