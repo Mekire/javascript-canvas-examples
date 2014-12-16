@@ -51,7 +51,6 @@ PF.spriteCollideAny = function(sprite, group){
 };
 
 
-
 PF.spriteCollideMaskAny = function(sprite, group, threshold){
     var tolerance = threshold || 0;
     var context = sprite.mask.getContext('2d');
