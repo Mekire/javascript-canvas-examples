@@ -18,7 +18,7 @@ body {
 
 
 .canvas {
-    margin: 20px;
+    margin: 20px 0px 0px 0px;
     background-color : #114;
     border : 5px solid black;
     border-radius: 2%;

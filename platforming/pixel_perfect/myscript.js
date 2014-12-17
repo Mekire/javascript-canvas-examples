@@ -51,22 +51,53 @@ PF.spriteCollideAny = function(sprite, group){
 };
 
 
+//PF.spriteCollideMaskAny = function(sprite, group, threshold){
+//    var tolerance = threshold || 0;
+//    var context = sprite.mask.getContext('2d');
+//    var w = sprite.mask.width;
+//    var h = sprite.mask.height;
+//    for(var i=0; i<group.length; i++){
+//        context.globalCompositeOperation = 'copy';
+//        context.drawImage(sprite.image, 0, 0);
+//        context.globalCompositeOperation = 'destination-in';
+//        var dx = group[i].rect.x-sprite.rect.x;
+//        var dy = group[i].rect.y-sprite.rect.y;
+//        context.drawImage(group[i].image, dx, dy);
+//        var data = context.getImageData(0, 0, w, h).data;
+//        for(var pixel=0; pixel<data.length; pixel+= 4)
+//            if(!(data[pixel+3] <= tolerance)){
+//                return group[i];
+//            }
+//    }
+//    return false;
+//};
+
 PF.spriteCollideMaskAny = function(sprite, group, threshold){
     var tolerance = threshold || 0;
-    var context = sprite.mask.getContext('2d');
-    var w = sprite.mask.width;
-    var h = sprite.mask.height;
     for(var i=0; i<group.length; i++){
+        var other = group[i];
+        var clipRect = sprite.rect.clip(other.rect);
+        if(clipRect.w === 0 || clipRect.h === 0)
+            return false;
+        
+        sprite.mask.width = clipRect.w;
+        sprite.mask.height = clipRect.h;
+        var context = sprite.mask.getContext('2d');
+
         context.globalCompositeOperation = 'copy';
-        context.drawImage(sprite.image, 0, 0);
+        var dx = sprite.rect.x-clipRect.x;
+        var dy = sprite.rect.y-clipRect.y;
+        context.drawImage(sprite.image, dx, dy);
+
         context.globalCompositeOperation = 'destination-in';
-        var dx = group[i].rect.x-sprite.rect.x;
-        var dy = group[i].rect.y-sprite.rect.y;
-        context.drawImage(group[i].image, dx, dy);
-        var data = context.getImageData(0, 0, w, h).data;
+        dx = other.rect.x-clipRect.x;
+        dy = other.rect.y-clipRect.y;
+        context.drawImage(other.image, dx, dy);
+
+        var data = context.getImageData(0, 0, clipRect.w, clipRect.h).data;
         for(var pixel=0; pixel<data.length; pixel+= 4)
             if(!(data[pixel+3] <= tolerance)){
-                return group[i];
+                return other;
             }
     }
     return false;
@@ -284,6 +315,8 @@ PF.GameLoop = function(context){
     this.player = new PF.Player([50,-25], 240);
     this.blocks = this.makeBlocks();
     this.mainLoop = this.mainLoop.bind(this);
+    this.frameCount = 0;
+    this.deltaSum = 0;
 };
 
 PF.GameLoop.prototype.makeBlocks = function(){
@@ -325,6 +358,21 @@ PF.GameLoop.prototype.render = function(){
         this.blocks[i].draw(this.context);
 };
 
+PF.GameLoop.prototype.displayFPS= function(delta){
+    /*
+     * Update dom element with ID "FPS" to the current fps 
+     * (averaged over 10 frames).
+     */
+    this.frameCount += 1;
+    this.deltaSum += delta;
+    if(!(this.frameCount%10)){
+        var fps = document.getElementById("FPS");
+        fps.innerHTML = "FPS: "+(this.frameCount/this.deltaSum).toFixed(2);
+        this.frameCount = 0;
+        this.deltaSum = 0;
+    }
+};
+
 PF.GameLoop.prototype.mainLoop = function(time){
     /*
      * Update and render the scene.  This function is called by 
@@ -336,6 +384,7 @@ PF.GameLoop.prototype.mainLoop = function(time){
     this.lastTime = time;
     this.update(time, delta);
     this.render();
+    this.displayFPS(delta);
     requestAnimationFrame(this.mainLoop);
 };
 

@@ -290,6 +290,21 @@ PF.GameLoop.prototype.render = function(){
         this.blocks[i].draw(this.context);
 };
 
+PF.GameLoop.prototype.displayFPS= function(delta){
+    /*
+     * Update dom element with ID "FPS" to the current fps 
+     * (averaged over 10 frames).
+     */
+    this.frameCount += 1;
+    this.deltaSum += delta;
+    if(!(this.frameCount%10)){
+        var fps = document.getElementById("FPS");
+        fps.innerHTML = "FPS: "+(this.frameCount/this.deltaSum).toFixed(2);
+        this.frameCount = 0;
+        this.deltaSum = 0;
+    }
+};
+
 PF.GameLoop.prototype.mainLoop = function(time){
     /*
      * Update and render the scene.  This function is called by 
@@ -301,6 +316,7 @@ PF.GameLoop.prototype.mainLoop = function(time){
     this.lastTime = time;
     this.update(time, delta);
     this.render();
+    this.displayFPS(delta);
     requestAnimationFrame(this.mainLoop);
 };
 
