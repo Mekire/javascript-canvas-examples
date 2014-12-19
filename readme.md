@@ -17,7 +17,7 @@ Due to my inexperience with the language, some of the approaches I take may be s
 [Tank Turret](http://jsfiddle.net/Mekire/z3aqbxd0/embedded/result/)  
 [Topdown Scrolling (pixel perfect)](http://jsfiddle.net/Mekire/5ez5whvf/embedded/result/)  
 [Platforming (basic)](http://jsfiddle.net/Mekire/bjhzkdac/embedded/result/)  
-
+[Platforming (pixel perfect: bad performance)](http://jsfiddle.net/Mekire/vrwaanma/embedded/result/  
 
 
 ### Note on cloning:  

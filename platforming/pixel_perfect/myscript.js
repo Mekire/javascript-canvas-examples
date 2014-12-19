@@ -1,5 +1,7 @@
 /*
- * A very basic platformer.
+ * Platformer with pixel perfect collisions.  
+ * Collision is accomplished through image compositing.
+ * Performance leaves something to be desired.
  */
 
 
@@ -51,49 +53,27 @@ PF.spriteCollideAny = function(sprite, group){
 };
 
 
-//PF.spriteCollideMaskAny = function(sprite, group, threshold){
-//    var tolerance = threshold || 0;
-//    var context = sprite.mask.getContext('2d');
-//    var w = sprite.mask.width;
-//    var h = sprite.mask.height;
-//    for(var i=0; i<group.length; i++){
-//        context.globalCompositeOperation = 'copy';
-//        context.drawImage(sprite.image, 0, 0);
-//        context.globalCompositeOperation = 'destination-in';
-//        var dx = group[i].rect.x-sprite.rect.x;
-//        var dy = group[i].rect.y-sprite.rect.y;
-//        context.drawImage(group[i].image, dx, dy);
-//        var data = context.getImageData(0, 0, w, h).data;
-//        for(var pixel=0; pixel<data.length; pixel+= 4)
-//            if(!(data[pixel+3] <= tolerance)){
-//                return group[i];
-//            }
-//    }
-//    return false;
-//};
-
 PF.spriteCollideMaskAny = function(sprite, group, threshold){
+    /*
+     * Check pixel perfect collision via image compositing.
+     */
     var tolerance = threshold || 0;
     for(var i=0; i<group.length; i++){
         var other = group[i];
         var clipRect = sprite.rect.clip(other.rect);
         if(clipRect.w === 0 || clipRect.h === 0)
             return false;
-        
         sprite.mask.width = clipRect.w;
         sprite.mask.height = clipRect.h;
         var context = sprite.mask.getContext('2d');
-
         context.globalCompositeOperation = 'copy';
         var dx = sprite.rect.x-clipRect.x;
         var dy = sprite.rect.y-clipRect.y;
         context.drawImage(sprite.image, dx, dy);
-
         context.globalCompositeOperation = 'destination-in';
         dx = other.rect.x-clipRect.x;
         dy = other.rect.y-clipRect.y;
         context.drawImage(other.image, dx, dy);
-
         var data = context.getImageData(0, 0, clipRect.w, clipRect.h).data;
         for(var pixel=0; pixel<data.length; pixel+= 4)
             if(!(data[pixel+3] <= tolerance)){
@@ -115,6 +95,9 @@ PF.Block = function(x, y){
 };
 
 PF.Block.prototype.makeImage = function(){
+    /*
+     * Create a canvas element with the blocks image.
+     */
     var image = document.createElement('canvas');
     var context = image.getContext('2d');
     context.fillStyle = this.color;
